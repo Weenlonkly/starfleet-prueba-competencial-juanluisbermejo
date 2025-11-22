@@ -86,7 +86,7 @@ sudo apt install docker.io
 
 ## Es una mision engañosa que te pide repetir todo lo anterior, y a parte hacer un readme de todo ello (este mismo readme).
 
-### Si ya 
+### Si ya se ha hecho todo la mision esta cumplida
 
 # Errores encontrados 
 
