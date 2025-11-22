@@ -1,1 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diagnóstico - Ingeniería</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#0b0b0b;color:#eee;margin:0;padding:18px}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-size:1.1rem;margin:0 0 12px 0;color:#ffd36b}
+  h2{font-size:0.95rem;margin:22px 0 10px;color:#ff9f43}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .card{background:#141414;border:1px solid #222;padding:10px;border-radius:6px}
+  .label{font-size:0.8rem;color:#9aa0a6}
+  .value{font-family:monospace;margin-top:6px;font-size:0.95rem}
+  .note{margin-top:12px;color:#9aa0a6;font-size:0.85rem}
+  .ufw-list{margin-top:8px;font-family:monospace;font-size:0.85rem;line-height:1.2em}
+  @media(max-width:540px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Panel de Diagnóstico</h1>
 
+    <!-- PANEL PRINCIPAL -->
+    <div class="grid" aria-live="polite">
+      <div class="card">
+        <div class="label">Estado de Apache</div>
+        <div id="apache" class="value">—</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Estado de MySQL</div>
+        <div id="mysql" class="value">—</div>
+      </div>
+
+      <div class="card">
+      <div class="label">Versión de PHP</div>
+        <div id="php" class="value">—</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Versión de Docker</div>
+        <div id="docker" class="value">—</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Versión del kernel</div>
+        <div id="kernel" class="value">—</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Tiempo activo (uptime)</div>
+        <div id="uptime" class="value">—</div>
+      </div>
+    </div>
+
+    <!-- PANEL UFW -->
+    <h2>Estado del Escudo Deflector (UFW)</h2>
+    <div class="card">
+      <div class="label">Estado del firewall</div>
+      <div id="ufw_status" class="value">—</div>
+
+      <div class="label" style="margin-top:10px;">Puertos / reglas activas</div>
+      <div id="ufw_rules" class="ufw-list">—</div>
+    </div>
+
+    <div class="note">Última actualización: <span id="last">—</span></div>
+  </div>
+
+<script>
+const URL = '/telemetry.json';
+
+async function update(){
+try{
+    const res = await fetch(URL + '?_=' + Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+
+    document.getElementById('apache').textContent = j.apache_status || 'desconocido';
+    document.getElementById('mysql').textContent  = j.mysql_status  || 'desconocido';
+    document.getElementById('php').textContent    = j.php_version   || 'desconocida';
+    document.getElementById('docker').textContent = j.docker_version|| 'no instalado';
+    document.getElementById('kernel').textContent = j.kernel_version|| 'desconocido';
+    document.getElementById('uptime').textContent = j.uptime        || 'desconocido';
+
+    // UFW
+    document.getElementById('ufw_status').textContent = j.ufw_status || 'desconocido';
+
+    const rulesBox = document.getElementById('ufw_rules');
+    rulesBox.innerHTML = "";
+
+    if(Array.isArray(j.ufw_rules)){
+      j.ufw_rules.forEach(r => {
+        const line = document.createElement('div');
+        line.textContent = r;
+        rulesBox.appendChild(line);
+      });
+    } else {
+      rulesBox.textContent = 'sin datos';
+    }
+
+    document.getElementById('last').textContent = new Date().toLocaleString();
+  }catch(e){
+    ['apache','mysql','php','docker','kernel','uptime','ufw_status','ufw_rules']
+      .forEach(id => document.getElementById(id).textContent = 'error');
+
+    console.error(e);
+  }
+}
+update();
+setInterval(update, 15000);
+</script>
+</body>
+</html>
